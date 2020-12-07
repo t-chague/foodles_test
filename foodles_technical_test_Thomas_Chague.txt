@@ -1,0 +1,67 @@
+1 - SQL
+
+SELECT count(DISTINCT transaction_id) 
+FROM subvention
+;
+
+SELECT t.company, count(distinct t.transaction_id)
+FROM transaction t
+INNER JOIN subvention s
+	ON t.transaction_id = s.transaction_id
+GROUP BY t.company
+;
+
+2 - General programming
+
+def func(sentence, n) :
+    """
+    Function that takes as input (sentence: String, n: Number)
+    and returns a list of size `n` where each element contains a word and the frequency of that word in `sentence`
+    This list should be sorted by decreasing frequency
+    
+    Args :
+      sentence(str) : sentence we want to analyze.
+      n : Number of elements we want in the returned list
+      
+    Returns :
+      list : A list of the n tuples of word most represented, with the associated frequency
+    """
+    l1 = sentence.split()
+    l2 = []
+    for word in set(l1) :
+        l2.append((word, l1.count(word)))
+        
+    l2 = sorted(l2, key=lambda x: x[1], reverse = True)
+    
+    return l2[:n]
+
+3 - Optimization
+
+The problem we face here can be approached with an optimization under constraint model, linked with a forecast solution.
+
+First we need to set up a forecast model that would estimate the demand of each dish for each fridge. This model would be fed with data from past comsuption, to which we can add other data such as the day of the week, the temperature, the number of employee per company... You could both a timeserie model and a classical forecast solution. In terms of choice of model, we could try preexisting solutions such as Facebook prophet, or build our own solution. XgBoost seems to be an effective solution if we don't chose a timeserie approach, as there are a limited number of features.
+
+Then we need to create our optimization model. First we need to define our objective function whose objective would be to minimize the difference between our forecasts, and the current stock + the quantity added every day.
+
+The models would contains the following constraints :
+- Total number of dishes = available stocks
+- number of dish per fridge < 20 
+- Minimum dish per fridge >= client requirements (one constraint per client/dish if the client has a requirement)
+
+4 - Machine learning
+
+For this problem, the granularity is weekly, so we need to make a model that makes a prediction every week. 
+
+- How would you create your dataset ?
+By transforming the table of sales so that each line represent the number of sales made weekly for every dish.
+One row should represent one observation we want to predict. 
+
+- Which variables would you use ?
+
+| product_name | quantity_sold | week_id | season_of_the_year | average_temperature | estimated_number_of_clients | 
+
+We would need to find other variables that allows to take into account the seasonality of the products. 
+We could create a variable for each
+
+- Which KPI would you track ?
+	The number of overall sales each week and for each dish is the KPI we wan't to track. Indeed, this is what we wan't to predict so it would be our target variable. No need to make a prediction for every client, as we make global commands. Our optimization model will be used to dispatch the ordered quantity between different clients.
